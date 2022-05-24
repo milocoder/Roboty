@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<title>Windesheim robot app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="static/manifest.json">
+
+<link rel="stylesheet" href="static/settings-style.css">
+<script src="static/settings.js"></script>
+
+<body>
+    <div class="mainbox">
+        <!-- top Bar -->
+        <div class="top_bar top_bar_state_1" id="top_bar">
+            <label class="top_bar_back_button" onclick="location.href='/'"><i class="icon"
+                    style="font-size:15px;">&#xe859;</i>Overzicht</label>
+            <label class="top_bar_text">Info</label>
+        </div><br>
+
+        <!-- content Box -->
+        <div class="main_scroll_box" id="scroll_box" onscroll="scroll()">
+            <div class="innerbox">
+
+                <!-- info box -->
+
+                <div class="partbox">
+                    <!-- change the robot name -->
+                    <div class="buttonbox">
+                        <label>Naam</label><input id="robot_name" type="text" value={{ robot_name }}>
+                    </div>
+
+                    <div class="buttonbox" style="border-bottom:none;">
+                        <label>Modelnaam</label><label class="settings_text_right">Raspberry Pi Zero 2 W</label>
+                    </div>
+
+                </div>
+
+                <!-- save button box -->
+                <div class="partbox">
+
+                    <div class="button_click_box" onclick="save(); button_click(this);">
+                        <div class="buttonbox" style="border-bottom:none;">
+                            <label style="color:#3478F6;">Wijzigingen opslaan</label>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    function save() {
+        robot_name = document.getElementById("robot_name");
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/save-info?name=" + robot_name.value, true);
+        xhttp.send();
+    }
+</script>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<title>Windesheim robot app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="static/manifest.json">
+
+<link rel="stylesheet" href="static/main-style.css?2">
+<script src="static/main.js"></script>
+
+<body>
+
+  <!-- overview -->
+
+  <div class="mainbox" id="overview">
+    <!-- top Bar -->
+    <div class="top_bar top_bar_state_1" id="top_bar_overview">
+      <label id="top_bar_text_overview" class="top_bar_text" hidden>Overzicht</label>
+    </div>
+    <!-- content Box -->
+    <div class="main_scroll_box" id="overview_scroll_box" onscroll="overview_scroll()">
+      <div class="innerbox">
+
+        <label class="title">Overzicht</label>
+
+        <!-- battery box -->
+        <div class="partbox">
+          <label class="box_title" id="battery_color" style="color: #64DA64;"><i id="battery_icon"
+              class="icon">&#xf240;</i> Batterij status</label><br>
+          <label class="box_text" id="battery_status">100</label><label class="box_text_small"> %</label>
+        </div>
+
+        <!-- Program status -->
+        <div class="partbox">
+          <label class="box_title" style="color: #F09A37;"><i class="icon">&#xe88d;</i> Programma status</label><br>
+          <label class="box_text" id="program_status">standby</label><label class="box_text_small"> </label>
+        </div>
+
+        <!-- Program runtime -->
+        <div class="partbox">
+          <label class="box_title" style="color: #F09A37;"><i class="icon">&#xf252;</i> Programma runtime</label><br>
+          <label class="box_text" id="program_runtime_m">0</label><label class="box_text_small"> min </label>
+          <label class="box_text" id="program_runtime_s">0</label><label class="box_text_small"> sec</label>
+        </div>
+
+        <!-- cpu temperature -->
+        <div class="partbox">
+          <label class="box_title" style="color: #F09A37;"><i class="icon">&#xf2c9;</i> CPU temperatuur</label><br>
+          <label class="box_text" id="cpu_temp">0</label><label class="box_text_small"> °C</label>
+        </div>
+
+        <!-- camera angle -->
+        <div class="partbox">
+          <label class="box_title" style="color: #3478F6;"><i class="icon">&#xe80d;</i> Camera hoek</label><br>
+          <label class="box_text" id="camera_angle">20</label><label class="box_text_small"> graden</label>
+        </div>
+
+        <!-- camera offset -->
+        <div class="partbox">
+          <label class="box_title" style="color: #3478F6;"><i class="icon">&#xe80d;</i> Camera offset</label><br>
+          <label class="box_text" id="camera_offset">10</label><label class="box_text_small"></label>
+        </div>
+
+        <!-- spacer for bottom bar -->
+        <div style="height:85px;"></div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- settings -->
+
+  <div class="mainbox" id="settings" style="left:100%;">
+    <!-- top Bar -->
+    <div class="top_bar top_bar_state_1" id="top_bar_settings">
+      <label class="top_bar_text">Instellingen</label>
+    </div><br>
+    <!-- content Box -->
+    <div class="main_scroll_box" id="settings_scroll_box" onscroll="settings_scroll();">
+      <div class="innerbox">
+
+        <!-- box -->
+        <div class="partbox_settings">
+
+          <div class="buttonbox_settings" onclick="location.href='/info'">
+            <label>Info</label><label class="button_arrow"><i class="icon">&#xe85a;</i></label>
+          </div>
+
+          <div class="buttonbox_settings" style="border-bottom:none;">
+            <label>Hoofdprogramma</label><input type="checkbox" id="start_stop_switch" style="float: right;"
+              onclick="set_program_state(this);">
+          </div>
+
+        </div>
+
+        <!-- box -->
+        <div class="partbox_settings">
+
+          <div class="buttonbox_settings" onclick="location.href='/camera'">
+            <label>Camera</label><label class="button_arrow"><i class="icon">&#xe85a;</i></label>
+          </div>
+
+          <div class="buttonbox_settings" style="border-bottom:none;" onclick="location.href='/motors'">
+            <label>Motoren</label><label class="button_arrow"><i class="icon">&#xe85a;</i></label>
+          </div>
+
+        </div>
+
+        <!-- poweroff box -->
+        <div class="partbox_settings">
+
+          <div class="button_click_box" onclick="poweroff(); button_click(this);">
+            <div class="buttonbox_settings" style="border-bottom:none;">
+              <label style="color:#EB4D3D;">Zet uit</label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- spacer for bottom bar -->
+        <div style="height:85px;"></div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- bottom bar -->
+
+  <div class="bottom_bar">
+    <!-- overview button -->
+    <div class="bottom_bar_button" id="overview_button" style="color:#3478F6;" onclick="show_overview()">
+      <i class="bottom_bar_icon">&#xe80f;</i> <br>
+      <label class="bottom_bar_text">Overzicht</label>
+    </div>
+    <!-- Overview button -->
+    <div class="bottom_bar_button" id="settings_button" onclick="show_settings()">
+      <i class="bottom_bar_icon">&#xe83f;</i> <br>
+      <label class="bottom_bar_text">Instellingen</label>
+    </div>
+
+  </div>
+</body>
+
+</html>

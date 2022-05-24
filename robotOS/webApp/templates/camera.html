@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<title>Windesheim robot app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="static/manifest.json">
+
+<link rel="stylesheet" href="static/settings-style.css">
+<script src="static/settings.js"></script>
+
+<body>
+    <div class="mainbox">
+        <!-- top Bar -->
+        <div class="top_bar top_bar_state_1" id="top_bar">
+            <label class="top_bar_back_button" onclick="location.href='/'"><i class="icon"
+                    style="font-size:15px;">&#xe859;</i>Overzicht</label>
+            <label class="top_bar_text">Camera</label>
+        </div><br>
+
+        <!-- content Box -->
+        <div class="main_scroll_box" id="scroll_box" onscroll="scroll()">
+            <div class="innerbox">
+
+                <!-- camera box -->
+                <a>Lijn kleur bereik</a>
+                <div class="partbox">
+                    <!-- change the robot name -->
+                    <div class="buttonbox">
+                        <label>Onder waarde</label><input id="bottom_color" type="text" value={{ bottom_color }}>
+                    </div>
+
+                    <div class="buttonbox" style="border-bottom:none;">
+                        <label>Boven waarde</label><input id="top_color" type="text" value={{ top_color }}>
+                    </div>
+
+                </div>
+
+                <!-- camera preview -->
+                <div class="partbox" id ="preview_box" hidden>
+                    <img class="preview" id="preview">
+                </div>
+
+                <!-- preview button box -->
+                <div class="partbox">
+
+                    <div class="button_click_box" onclick="get_preview(); button_click(this);">
+                        <div class="buttonbox" style="border-bottom:none;">
+                            <label style="color:#3478F6;">Camera preview</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- save button box -->
+                <div class="partbox">
+
+                    <div class="button_click_box" onclick="save(); button_click(this);">
+                        <div class="buttonbox" style="border-bottom:none;">
+                            <label style="color:#3478F6;">Wijzigingen opslaan</label>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    function save() {
+        top_color = document.getElementById("top_color");
+        bottom_color = document.getElementById("bottom_color");
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/save-camera?top_color=" + top_color.value + "&bottom_color=" + bottom_color.value, true);
+        xhttp.send();
+    }
+
+    function get_preview() {
+        const d = new Date();
+        let time = d.getTime();
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/sendevent?event=SAVELINEPREVIEW", true);
+        xhttp.send();
+        setTimeout(function () {
+            document.getElementById("preview").src = "camera-preview.png?" + time;
+            document.getElementById("preview_box").hidden = false;
+            xhttp.open("GET", "/sendevent?event=NOTHING", true);
+            xhttp.send();
+        }, 1000);
+
+    }
+</script>
+
+<style>
+    .preview{
+        width: 100%;
+        margin-bottom: -4px;
+    }
+</style>
+
+</html>

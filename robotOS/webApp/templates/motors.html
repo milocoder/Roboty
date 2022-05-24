@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<title>Windesheim robot app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="static/manifest.json">
+
+<link rel="stylesheet" href="static/settings-style.css">
+<script src="static/settings.js"></script>
+
+<body>
+    <div class="mainbox">
+        <!-- top Bar -->
+        <div class="top_bar top_bar_state_1" id="top_bar">
+            <label class="top_bar_back_button" onclick="location.href='/'"><i class="icon"
+                    style="font-size:15px;">&#xe859;</i>Overzicht</label>
+            <label class="top_bar_text">Motoren</label>
+        </div><br>
+
+        <!-- content Box -->
+        <div class="main_scroll_box" id="scroll_box" onscroll="scroll()">
+            <div class="innerbox">
+
+                <!-- motors settings box -->
+                <a>Instellingen</a>
+                <div class="partbox">
+                    <!-- change the robot name -->
+                    <div class="buttonbox">
+                        <label>Motor snelheid</label><input id="motor_max_speed" type="text" value={{ motor_max_speed
+                            }}>
+                    </div>
+
+                    <div class="buttonbox" style="border-bottom:none;">
+                        <label>Motor balans</label><input id="motor_balance" type="text" value={{ motor_balance }}>
+                    </div>
+
+                </div>
+
+                <!-- motors test box -->
+                <a>Motoren test</a>
+                <div class="partbox">
+                    <!-- change the robot name -->
+                    <div class="button_click_box" onclick="test_motor_right(); button_click(this);">
+                        <div class="buttonbox">
+                            <label>Test motor rechts</label>
+                        </div>
+                    </div>
+
+                    <div class="button_click_box" onclick="test_motor_left(); button_click(this);">
+                        <div class="buttonbox" style="border-bottom:none;">
+                            <label>Test motor links</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- save button box -->
+                <div class="partbox">
+
+                    <div class="button_click_box" onclick="save(); button_click(this);">
+                        <div class="buttonbox" style="border-bottom:none;">
+                            <label style="color:#3478F6;">Wijzigingen opslaan</label>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    function save() {
+        motor_max_speed = document.getElementById("motor_max_speed");
+        motor_balance = document.getElementById("motor_balance");
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/save-motors?motor_balance=" + motor_balance.value + "&motor_max_speed=" + motor_max_speed.value, true);
+        xhttp.send();
+    }
+
+    function test_motor_right() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/sendevent?event=TESTMOTORRIGHT", true);
+        xhttp.send();
+        setTimeout(function () {
+            xhttp.open("GET", "/sendevent?event=NOTHING", true);
+            xhttp.send();
+        }, 600);
+    }
+
+    function test_motor_left() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/sendevent?event=TESTMOTORLEFT", true);
+        xhttp.send();
+        setTimeout(function () {
+            xhttp.open("GET", "/sendevent?event=NOTHING", true);
+            xhttp.send();
+        }, 600);
+    }
+</script>
+
+</html>

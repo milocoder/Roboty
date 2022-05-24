@@ -1,0 +1,9 @@
+{
+    "short_name": "RobotApp",
+    "name": "Windesheim Robot App",
+    "start_url": "/",
+    "background_color": "#f3f1f6",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#f3f1f6"
+  }

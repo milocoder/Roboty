@@ -1,0 +1,8 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "scss.lint.universalSelector": "ignore",
+    "files.associations": {
+        "string": "cpp",
+        "iosfwd": "cpp"
+    }
+}
