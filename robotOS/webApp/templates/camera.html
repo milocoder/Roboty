@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<!--
+    robotOS v1.0
+    file: camera.html
+    last update: 29-05-2022
+    author: Richard Willems
+-->
+
 <html>
 <title>Windesheim robot app</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +26,7 @@
         </div><br>
 
         <!-- content Box -->
-        <div class="main_scroll_box" id="scroll_box" onscroll="scroll()">
+        <div class="main_scroll_box" id="scroll_box" onscroll="settings_scroll()">
             <div class="innerbox">
 
                 <!-- camera box -->
@@ -27,26 +34,33 @@
                 <div class="partbox">
                     <!-- change the robot name -->
                     <div class="buttonbox">
-                        <label>Onder waarde</label><input id="bottom_color" type="text" value={{ bottom_color }}>
+                        <label>Onder waarde</label>
+                        <label class="small_info_text">RGB</label><input id="bottom_color" type="text" value={{ bottom_color }} placeholder="0 ~ 255">
                     </div>
 
                     <div class="buttonbox" style="border-bottom:none;">
-                        <label>Boven waarde</label><input id="top_color" type="text" value={{ top_color }}>
+                        <label>Boven waarde</label>
+                        <label class="small_info_text">RGB</label><input id="top_color" type="text" value={{ top_color }} placeholder="0 ~ 255">
                     </div>
 
                 </div>
 
                 <!-- camera preview -->
-                <div class="partbox" id ="preview_box" hidden>
-                    <img class="preview" id="preview">
+                <div class="partbox" id ="preview_box1" hidden>
+                    <img class="preview" id="preview1">
                 </div>
+                <!-- line preview -->
+                <div class="partbox" id ="preview_box2" hidden>
+                    <img class="preview" id="preview2">
+                </div>
+
 
                 <!-- preview button box -->
                 <div class="partbox">
 
                     <div class="button_click_box" onclick="get_preview(); button_click(this);">
                         <div class="buttonbox" style="border-bottom:none;">
-                            <label style="color:#3478F6;">Camera preview</label>
+                            <label style="color:#3478F6;">Camera previews</label>
                         </div>
                     </div>
 
@@ -62,6 +76,9 @@
                     </div>
 
                 </div>
+
+                <!-- spacer -->
+                <div style="height:45px;"></div>
 
             </div>
         </div>
@@ -81,11 +98,13 @@
         const d = new Date();
         let time = d.getTime();
         var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", "/sendevent?event=SAVELINEPREVIEW", true);
+        xhttp.open("GET", "/sendevent?event=SAVEPREVIEWS", true);
         xhttp.send();
         setTimeout(function () {
-            document.getElementById("preview").src = "camera-preview.png?" + time;
-            document.getElementById("preview_box").hidden = false;
+            document.getElementById("preview1").src = "camera-preview.png?" + time;
+            document.getElementById("preview2").src = "line-preview.png?" + time;
+            document.getElementById("preview_box1").hidden = false;
+            document.getElementById("preview_box2").hidden = false;
             xhttp.open("GET", "/sendevent?event=NOTHING", true);
             xhttp.send();
         }, 1000);

@@ -1,6 +1,7 @@
 /* robotOS v1.0
  * file: main.cpp
- * last update: 05-05-2022
+ * last update: 29-05-2022
+ * author: Richard Willems
  */
 
 // includes
@@ -13,27 +14,31 @@
 #include <wiringSerial.h>
 #include <thread>
 
+#include <ctime>
+
 using namespace cv;
 using namespace std;
 
 // pin definitions
-#define PWM_forward_right 23 // GPIO 13
-#define PWM_forward_left 1 // GPIO 18
-#define BT_emergency_stop 7 // GPIO 4
+#define PWM_forward_right 1 // GPIO 18
+#define PWM_forward_left 23 // GPIO 13
+#define BT_emergency_stop 0 //GPIO 17
 
 // global variables
-#define screen_width 640
-#define screen_height 360
+#define screen_width 160
+#define screen_height 120
 int camera_angle = 0;
 int camera_offset = 0;
+clock_t camera_fps = 0;
 int battery_status = 100;
 int motor_balance = 0;
-int motor_max_speed = 50;
-double pct_pwm = 0;
+int motor_max_speed = 1024;
+float current_pwm = 0;
 int bottom_color = 0;
 int top_color = 0;
+int motor_start_time = 0;
 string old_send_event = "STOP";
-bool save_line_preview = false;
+bool save_previews = false;
 enum events
 {
 	NOTHING,
@@ -50,7 +55,8 @@ enum states
 	STEP1,
 	SETP2,
 	TESTINGMOTORRIGHT,
-	TESTINGMOTORLEFT
+	TESTINGMOTORLEFT,
+	EMERGENCY_STOP
 };
 enum direction
 {
@@ -64,7 +70,8 @@ states STATUS = STANDBY;
 void write_live_data();
 string get_config_data(string config_line, string old_data);
 void line_detection();
-void set_motor_speed(int pct_pwm_left, int pct_pwm_right);
+void motor_left(float pwm_left);
+void motor_right(float pwm_right);
 bool motors_start();
 bool motors_stop();
 void drive();
@@ -77,7 +84,7 @@ void emergency_stop();
 int main()
 {
 	wiringPiSetup();
-	wiringPiISR(BT_emergency_stop, INT_FALLING_EDGE, emergency_stop)
+	wiringPiISR(BT_emergency_stop, INT_EDGE_RISING, emergency_stop);
 	pinMode(PWM_forward_right, PWM_OUTPUT);
 	pinMode(PWM_forward_left, PWM_OUTPUT);
 	pwmWrite(PWM_forward_right, 0);
@@ -97,10 +104,14 @@ int main()
 				EVENT = NOTHING;
 				STATUS = STARTING;
 				printf("[INFO] Starting program.\n");
-			} else if(EVENT == TESTMOTORRIGHT){
+			}
+			else if (EVENT == TESTMOTORRIGHT)
+			{
 				EVENT = NOTHING;
 				STATUS = TESTINGMOTORRIGHT;
-			} else if(EVENT == TESTMOTORLEFT){
+			}
+			else if (EVENT == TESTMOTORLEFT)
+			{
 				EVENT = NOTHING;
 				STATUS = TESTINGMOTORLEFT;
 			}
@@ -129,16 +140,26 @@ int main()
 			}
 			break;
 		case TESTINGMOTORRIGHT:
-			if(test_motor(RIGHT) == true){
+			if (test_motor(RIGHT) == true)
+			{
 				EVENT = NOTHING;
 				STATUS = STANDBY;
 			}
 			break;
 		case TESTINGMOTORLEFT:
-			if(test_motor(LEFT) == true){
+			if (test_motor(LEFT) == true)
+			{
 				EVENT = NOTHING;
 				STATUS = STANDBY;
 			}
+			break;
+		case EMERGENCY_STOP:
+			printf("[INFO] Emergency stop button pushed.\n");
+			current_pwm = 0;
+			motor_left(0);
+			motor_right(0);
+			EVENT = NOTHING;
+			STATUS = STANDBY;
 			break;
 		default:
 			break;
@@ -159,23 +180,51 @@ void line_detection()
 	Mat frame, whiteLine;
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
+	Point2f pts[4];
+	int contour = 0;
+	clock_t current_ticks, delta_ticks;
+
 	while (true)
 	{
+		current_ticks = clock();
 		// read frame
 		cap.read(frame);
 		// find the line by checking in a color range in the whole frame.
 		inRange(frame, Scalar(bottom_color, bottom_color, bottom_color), Scalar(top_color, top_color, top_color), whiteLine);
 		// make the line small en big again to remove noise.
-		erode(whiteLine, whiteLine, Mat(), Point(-1, -1), 20, 1, 1);
-		dilate(whiteLine, whiteLine, Mat(), Point(-1, -1), 20, 1, 1);
+		erode(whiteLine, whiteLine, Mat(), Point(-1, -1), 2, 1, 1);
+		dilate(whiteLine, whiteLine, Mat(), Point(-1, -1), 2, 1, 1);
 		// find the contours of the line.
 		Mat contourOut = whiteLine.clone();
 		findContours(contourOut, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
 		// check if there is a line.
 		if (contours.size() > 0)
 		{
+			if (contours.size() == 1)
+			{
+				contour = 0;
+			}
+			else
+			{
+				int lowest_point = screen_height;
+				for (int i = 0; i < contours.size(); i++)
+				{
+					RotatedRect blackbox = minAreaRect(contours[i]);
+					blackbox.points(pts);
+					Point coordinate = pts[3];
+					int contour_point = screen_height - coordinate.y;
+					if (contour_point < lowest_point)
+					{
+						contour = i;
+						lowest_point = contour_point;
+					}
+				}
+			}
 			// get the angle and corners of the line.
-			RotatedRect blackbox = minAreaRect(contours[0]);
+			RotatedRect blackbox = minAreaRect(contours[contour]);
+			//  draw in the contours.
+			drawContours(frame, contours, -1, Scalar(0, 0, 255), 3);
+
 			camera_angle = blackbox.angle;
 			if (camera_angle > 45)
 			{
@@ -193,91 +242,77 @@ void line_detection()
 			float centerline = blackbox.center.x;
 			camera_offset = centerline - (screen_width / 2);
 
-			putText(whiteLine, "angle:" + to_string(camera_angle), Point(10, 40), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-			putText(whiteLine, "offset:" + to_string(camera_offset), Point(10, 80), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-			// draw a line in the middel of the line.
-			line(whiteLine, Point(centerline, 200), Point(centerline, 250), Scalar(255, 255, 255), 3);
+			// putText(frame, "angle:" + to_string(camera_angle), Point(10, 40), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
+			// putText(frame, "offset:" + to_string(camera_offset), Point(10, 80), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
+			// putText(frame, "fps:" + to_string(fps), Point(10, 120), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
+			//  draw a line in the middel of the line.
+			line(frame, Point(centerline, 200.0 / 320 * screen_height), Point(centerline, 250.0 / 320 * screen_height), Scalar(255, 0, 0), 3);
 			// draw a line in the middel of the screen.
-			line(whiteLine, Point((screen_width / 2), 0), Point((screen_width / 2), screen_height), Scalar(255, 255, 255), 1);
+			line(frame, Point((screen_width / 2), 0), Point((screen_width / 2), screen_height), Scalar(255, 255, 255), 1);
 		}
-		// show the frame
-		// imshow("Live", frame);
-		// imwrite("/home/pi/test.png",frame);
-		if(save_line_preview == true){
-			imwrite("/home/pi/robotOS/data/images/camera-preview.png",whiteLine);
-			save_line_preview = false;
+		// save previews of the frame and line for the webapp
+		if (save_previews == true)
+		{
+			imwrite("/home/pi/robotOS/data/images/camera-preview.png", frame);
+			imwrite("/home/pi/robotOS/data/images/line-preview.png", whiteLine);
+			save_previews = false;
 		}
-		//imshow("Black/White", whiteLine);
+
+		// show the frame / line
+		imshow("Live", frame);
+		imshow("Black/White", whiteLine);
 		waitKey(1);
+		// fps counter
+		delta_ticks = clock() - current_ticks;
+		if (delta_ticks > 0)
+			camera_fps = CLOCKS_PER_SEC / delta_ticks;
 	}
 }
 
 /* motor functions */
-
-void emergency_stop()
-{
-	EVENT = NOTHING;
-	STATUS = STOPING;
-	printf("[info] Emergency stop!\n");
-	delay(50);
-	pct_pwm = 0;
-	set_motor_speed(0, 0);
-}
-
+// main drive function
 void drive()
 {
-	int steering_offset = 100.0 / ((screen_width / 2) + 90) * (camera_offset + camera_angle);
-	int pwm_right = pct_pwm;
-	int pwm_left = pct_pwm;
+	int steering_offset = 100.0 / (screen_width / 2 + 90) * (camera_offset + camera_angle);
+	printf("%d\n", steering_offset);
+	int pwm_right = current_pwm;
+	int pwm_left = current_pwm;
 	if (steering_offset > 0)
 	{
-		if (steering_offset >= motor_max_speed)
-		{
-			pwm_right = 0;
-		} else {
-			pwm_right = pct_pwm - steering_offset;
-		}
-		pwm_left = pct_pwm;
+		pwm_right = current_pwm / 100 * (100 - steering_offset);
 	}
 	else if (steering_offset < 0)
 	{
-		if (steering_offset <= motor_max_speed)
-		{
-			pwm_left = 0;
-		} else {
-			pwm_left = pct_pwm + steering_offset;
-		}
-		pwm_right = pct_pwm;
+		pwm_left = current_pwm / 100 * (100 + steering_offset);
 	}
-	set_motor_speed(pwm_left, pwm_right);
+	motor_left(pwm_left);
+	motor_right(pwm_right);
 }
 
-// set the motor speed in percentages
-void set_motor_speed(int pct_pwm_left, int pct_pwm_right)
-{
-	int pwm_right = 1024.0 / 100 * pct_pwm_right;
-	int pwm_left = 1024.0 / 100 * pct_pwm_left;
-	if (motor_balance > 0)
-	{
-		pwm_right = double(1024 / 100 * pct_pwm_right) / 100 * (100 + motor_balance);
-		pwm_left = 1024.0 / 100 * pct_pwm_left;
+// set the left motor speed
+void motor_left(float pwm_left){
+	if(motor_balance < 0){
+		pwm_left = pwm_left / 100 * (100 + motor_balance);
 	}
-	else if (motor_balance < 0)
-	{
-		pwm_right = 1024.0 / 100 * pct_pwm_right;
-		pwm_left = double(1024 / 100 * pct_pwm_left) / 100 * (100 - motor_balance);
+	pwmWrite(PWM_forward_left, pwm_left);
+}
+
+// set the right motor speed
+void motor_right(float pwm_right){
+	if(motor_balance > 0){
+		pwm_right = pwm_right / 100 * (100 - motor_balance);
 	}
 	pwmWrite(PWM_forward_right, pwm_right);
-	pwmWrite(PWM_forward_left, pwm_left);
 }
 
 // ramp up the motor speed from 0% to 100%
 bool motors_start()
 {
-	for (pct_pwm = 0; pct_pwm < motor_max_speed; ++pct_pwm)
+	for (current_pwm = 0; current_pwm < motor_max_speed; ++current_pwm)
 	{
-		set_motor_speed(pct_pwm, pct_pwm);
-		delay(25);
+		motor_left(current_pwm);
+		motor_right(current_pwm);
+		delay(motor_start_time);
 	}
 	return true;
 }
@@ -285,10 +320,11 @@ bool motors_start()
 // ramp down the motor speed from 100% to 0%
 bool motors_stop()
 {
-	for (pct_pwm = motor_max_speed; pct_pwm >= 0; --pct_pwm)
+	for (current_pwm = motor_max_speed; current_pwm >= 0; --current_pwm)
 	{
-		set_motor_speed(pct_pwm, pct_pwm);
-		delay(25);
+		motor_left(current_pwm);
+		motor_right(current_pwm);
+		delay(motor_start_time);
 	}
 	return true;
 }
@@ -296,30 +332,30 @@ bool motors_stop()
 // test the motor side and direction
 bool test_motor(direction motor)
 {
-	for (pct_pwm = 0; pct_pwm < 50; ++pct_pwm)
+	for (current_pwm = 0; current_pwm < 512; ++current_pwm)
 	{
 		if (motor == LEFT)
 		{
-			set_motor_speed(pct_pwm, 0);
+			motor_left(current_pwm);
 		}
 		else if (motor == RIGHT)
 		{
-			set_motor_speed(0, pct_pwm);
+			motor_right(current_pwm);
 		}
-		delay(25);
+		delay(motor_start_time);
 	}
 	delay(1000);
-	for (pct_pwm = 50; pct_pwm >= 0; --pct_pwm)
+	for (current_pwm = 512; current_pwm >= 0; --current_pwm)
 	{
 		if (motor == LEFT)
 		{
-			set_motor_speed(pct_pwm, 0);
+			motor_left(current_pwm);
 		}
 		else if (motor == RIGHT)
 		{
-			set_motor_speed(0, pct_pwm);
+			motor_right(current_pwm);
 		}
-		delay(25);
+		delay(motor_start_time);
 	}
 	return true;
 }
@@ -368,15 +404,16 @@ void write_live_data()
 	}
 	else if (STATUS == TESTINGMOTORRIGHT)
 	{
-		program_status = "motor test rechts";
+		program_status = "test motor rechts";
 	}
 	else if (STATUS == TESTINGMOTORLEFT)
 	{
-		program_status = "motor test links";
+		program_status = "test motor links";
 	}
 	ofstream data_file("/home/pi/robotOS/data/live.data");
 	data_file << "camera_angle=" << camera_angle
 			  << "\ncamera_offset=" << camera_offset
+			  << "\ncamera_fps=" << camera_fps
 			  << "\nbattery_status=" << battery_status
 			  << "\nprogram_status=" << program_status
 			  << "\n";
@@ -390,6 +427,7 @@ void load_config_data()
 	top_color = stoi(get_config_data("top_color", to_string(top_color)));
 	motor_balance = stoi(get_config_data("motor_balance", to_string(motor_balance)));
 	motor_max_speed = stoi(get_config_data("motor_max_speed", to_string(motor_max_speed)));
+	motor_start_time = stoi(get_config_data("motor_start_time", to_string(motor_start_time)));
 	string event = get_config_data("send_event", old_send_event);
 	if (old_send_event != event)
 	{
@@ -410,9 +448,9 @@ void load_config_data()
 		{
 			EVENT = TESTMOTORLEFT;
 		}
-		else if (event == "SAVELINEPREVIEW")
+		else if (event == "SAVEPREVIEWS")
 		{
-			save_line_preview = true;
+			save_previews = true;
 		}
 	}
 }
@@ -426,4 +464,8 @@ void ticker(int time)
 		write_live_data();
 		load_config_data();
 	}
+}
+// Emergency stop button
+void emergency_stop(){
+	STATUS = EMERGENCY_STOP;
 }

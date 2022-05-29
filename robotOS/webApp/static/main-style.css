@@ -1,3 +1,9 @@
+/*  robotOS v1.0
+ *  file: main-style.css
+ *  last update: 29-05-2022
+ *  author: Richard Willems
+*/
+
 body,
 html {
   height: 100%;
@@ -5,6 +11,8 @@ html {
   background-color: #f3f1f6;
   font-family: "Lato", sans-serif;
   font-size: 17px;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
 }
 
 * {
@@ -121,6 +129,7 @@ html {
   text-align: center;
   padding-top: 15px;
   transition: background-color 0.1s;
+  z-index: 10;
 }
 
 .top_bar_state_1 {
@@ -185,6 +194,10 @@ html {
   background-color: #ffffff;
   border-radius: 10px;
   margin-top: 10px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  max-width: 500px;
+  position: relative;
 }
 
 .buttonbox_settings {

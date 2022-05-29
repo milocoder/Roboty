@@ -1,3 +1,9 @@
+/*  robotOS v1.0
+ *  file: main.js
+ *  last update: 29-05-2022
+ *  author: Richard Willems
+*/
+
 // shows the overview page
 function show_overview() {
   document.getElementById("settings").style.left = "100%";
@@ -49,6 +55,7 @@ eventSource.addEventListener("data", function (e) {
   document.getElementById("battery_status").innerHTML = data.battery_status;
   document.getElementById("camera_angle").innerHTML = data.camera_angle;
   document.getElementById("camera_offset").innerHTML = data.camera_offset;
+  document.getElementById("camera_fps").innerHTML = data.camera_fps;
   document.getElementById("program_runtime_m").innerHTML = data.runtime_m;
   document.getElementById("program_runtime_s").innerHTML = data.runtime_s;
   document.getElementById("cpu_temp").innerHTML = data.cpu_temp;
@@ -67,13 +74,13 @@ eventSource.addEventListener("data", function (e) {
     document.getElementById("battery_color").style.color = "#64DA64";
   }
 
-  if(data.program_status == "standby" && toggle_wait == 0){
+  if (data.program_status == "standby" && toggle_wait == 0) {
     document.getElementById("start_stop_switch").checked = false;
     document.getElementById("start_stop_switch").disabled = false;
-  } else if(data.program_status == "active" && toggle_wait == 0){
+  } else if (data.program_status == "active" && toggle_wait == 0) {
     document.getElementById("start_stop_switch").checked = true;
     document.getElementById("start_stop_switch").disabled = false;
-  } else if(toggle_wait == 0) {
+  } else if (toggle_wait == 0) {
     document.getElementById("start_stop_switch").disabled = true;
   }
 }, true)
@@ -99,13 +106,15 @@ function set_program_state(toggle_switch) {
   }
   setTimeout(function () {
     toggle_wait = 0;
-}, 1000);
+    xhttp.open("GET", "/sendevent?event=NOTHING", true);
+    xhttp.send();
+  }, 1000);
 }
 
 //button click animation
 function button_click(button) {
   button.style.backgroundColor = "#D1D1D5";
   setTimeout(function () {
-      button.style.backgroundColor = "";
+    button.style.backgroundColor = "";
   }, 400);
 }

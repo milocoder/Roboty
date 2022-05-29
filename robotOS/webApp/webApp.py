@@ -1,6 +1,7 @@
 # robotOS v1.0
 # file: webApp.py
-# last update: 05-05-2022
+# last update: 29-05-2022
+# author: Richard Willems
 
 # imports
 import os
@@ -18,6 +19,7 @@ cpu = CPUTemperature()
 battery_status = 100
 camera_angle = 0
 camera_offset = 0
+camera_fps = 0
 program_status = "standby"
 
 # App config.
@@ -59,9 +61,11 @@ def camera():
 def motors():
     motor_max_speed = get_data_from_file("/home/pi/robotOS/data/config.data", "motor_max_speed", "none")
     motor_balance = get_data_from_file("/home/pi/robotOS/data/config.data", "motor_balance", "none")
+    motor_start_time = get_data_from_file("/home/pi/robotOS/data/config.data", "motor_start_time", "none")
     templateData = {
         'motor_max_speed': motor_max_speed,
-        'motor_balance': motor_balance
+        'motor_balance': motor_balance,
+        'motor_start_time': motor_start_time
     }
     return render_template('motors.html', **templateData)
 
@@ -70,7 +74,7 @@ def motors():
 def listen():
 
     def respond_to_client():
-        global start_time, battery_status, camera_angle, camera_offset, program_status
+        global start_time, battery_status, camera_angle, camera_offset, program_status, camera_fps
         while True:
             time_now = time.time()
             runtime = int(time_now - start_time)
@@ -82,11 +86,14 @@ def listen():
                 "/home/pi/robotOS/data/live.data", "camera_angle", f"{camera_angle}"))
             camera_offset = int(get_data_from_file(
                 "/home/pi/robotOS/data/live.data", "camera_offset", f"{camera_offset}"))
+            camera_fps = int(get_data_from_file(
+                "/home/pi/robotOS/data/live.data", "camera_fps", f"{camera_fps}"))
             program_status = get_data_from_file(
                 "/home/pi/robotOS/data/live.data", "program_status", f"{program_status}")
             _data = json.dumps({"battery_status": battery_status,
                                 "camera_angle": camera_angle,
                                 "camera_offset": camera_offset,
+                                "camera_fps": camera_fps,
                                 "program_status":program_status,
                                 "runtime_m": runtime_m,
                                 "runtime_s": runtime_s,
@@ -130,13 +137,22 @@ def get_camera_preview():
     filename = '/home/pi/robotOS/data/images/camera-preview.png'
     return send_file(filename, mimetype='image/png')
 
+# get the line preview image
+@app.route('/line-preview.png')
+def get_line_preview():
+    filename = '/home/pi/robotOS/data/images/line-preview.png'
+    return send_file(filename, mimetype='image/png')
+
 # save the motor settings
 @app.route('/save-motors')
 def save_motors():
     motor_max_speed = request.args.get('motor_max_speed', default=50, type=int)
     motor_balance = request.args.get('motor_balance', default=0, type=int)
+    motor_start_time = request.args.get('motor_start_time', default=0, type=int)
     write_data_to_config("motor_max_speed", motor_max_speed)
     write_data_to_config("motor_balance", motor_balance)
+    write_data_to_config("motor_start_time", motor_start_time)
+
     return "ok"
 
 # icon favicon
