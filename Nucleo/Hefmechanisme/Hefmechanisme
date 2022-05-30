@@ -1,0 +1,54 @@
+#include "mbed.h"
+#include <InterruptIn.h>
+
+DigitalOut in2(D12);
+DigitalOut in1(D11);
+InterruptIn hiSw(D10, PullDown);
+InterruptIn loSw(D9, PullDown);
+
+
+enum hefstate{hefLaag, hefHoog};
+enum event{omlaag, omhoog};
+event Events;
+hefstate hefStates = hefLaag;
+
+void laag();
+void hoog();
+
+
+int main() {
+    hiSw.rise(hoog);
+    loSw.rise(laag);
+
+    while(1){
+        switch (hefStates) {
+        case hefLaag:
+            in1 = 0;
+            in2 = 1;
+
+        case hefHoog:
+            in1 = 1;
+            in2 = 0;
+        break; 
+        }
+
+        switch (Events) {
+        case omlaag:
+            
+            if (hefHoog) {
+            hefStates = hefLaag;
+            }
+        case omhoog:
+            if (hefLaag) {
+            hefStates = hefHoog;
+            }
+        break;
+        }
+    }
+}
+void laag(){
+    Events = omlaag;
+}
+void hoog(){
+    Events = omhoog;
+}
