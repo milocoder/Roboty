@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<!--
+    robotOS v1.0
+    file: motors.html
+    last update: 29-05-2022
+    author: Richard Willems
+-->
+
 <html>
 <title>Windesheim robot app</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,20 +26,26 @@
         </div><br>
 
         <!-- content Box -->
-        <div class="main_scroll_box" id="scroll_box" onscroll="scroll()">
+        <div class="main_scroll_box" id="scroll_box" onscroll="settings_scroll()">
             <div class="innerbox">
 
                 <!-- motors settings box -->
                 <a>Instellingen</a>
                 <div class="partbox">
-                    <!-- change the robot name -->
+                    <!-- change max motor speed -->
                     <div class="buttonbox">
-                        <label>Motor snelheid</label><input id="motor_max_speed" type="text" value={{ motor_max_speed
-                            }}>
+                        <label>Motor snelheid</label>
+                        <label class="small_info_text">rpm</label><input id="motor_max_speed" type="text" value={{ motor_max_speed }} placeholder="0 ~ 1024">
                     </div>
-
+                    <!-- set the motor balance -->
+                    <div class="buttonbox">
+                        <label>Motor balans</label>
+                        <label class="small_info_text">%</label><input id="motor_balance" type="text" value={{ motor_balance }}>
+                    </div>
+                    <!-- set the motor start speed -->
                     <div class="buttonbox" style="border-bottom:none;">
-                        <label>Motor balans</label><input id="motor_balance" type="text" value={{ motor_balance }}>
+                        <label>Motor start snelheid</label>
+                        <label class="small_info_text">ms/rpm</label><input id="motor_start_time" type="text" value={{ motor_start_time }}>
                     </div>
 
                 </div>
@@ -66,6 +79,9 @@
 
                 </div>
 
+                <!-- spacer -->
+                <div style="height:25px;"></div>
+
             </div>
         </div>
     </div>
@@ -76,7 +92,9 @@
         motor_max_speed = document.getElementById("motor_max_speed");
         motor_balance = document.getElementById("motor_balance");
         var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", "/save-motors?motor_balance=" + motor_balance.value + "&motor_max_speed=" + motor_max_speed.value, true);
+        xhttp.open("GET", "/save-motors?motor_balance=" + motor_balance.value + 
+        "&motor_max_speed=" + motor_max_speed.value + 
+        "&motor_start_time=" + motor_start_time.value, true);
         xhttp.send();
     }
 

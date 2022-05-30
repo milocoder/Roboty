@@ -1,3 +1,9 @@
+/*  robotOS v1.0
+ *  file: settings-style.css
+ *  last update: 29-05-2022
+ *  author: Richard Willems
+*/
+
 body,
 html {
     height: 100%;
@@ -5,6 +11,8 @@ html {
     background-color: #f3f1f6;
     font-family: "Lato", sans-serif;
     font-size: 17px;
+    text-size-adjust: none;
+    -webkit-text-size-adjust: none;
 }
 
 * {
@@ -52,6 +60,7 @@ html {
     text-align: center;
     padding-top: 15px;
     transition: background-color 0.1s;
+    z-index: 10;
 }
 
 .top_bar_state_1 {
@@ -89,13 +98,15 @@ html {
     background-color: #ffffff;
     border-radius: 10px;
     margin-top: 10px;
-    overflow:hidden;
+    overflow: hidden;
 }
+
 .button_click_box {
     background-color: transparent;
     -webkit-transition-duration: 0.2s;
     transition-duration: 0.2s;
 }
+
 .buttonbox {
     padding-top: 12px;
     padding-bottom: 12px;
@@ -120,6 +131,10 @@ html {
     padding-top: 40px;
     padding-left: 15px;
     padding-right: 15px;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    max-width: 500px;
+    position: relative;
 }
 
 .mainbox {
@@ -190,23 +205,34 @@ input[type="checkbox"]:disabled {
 
 /* text field */
 input[type="text"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     float: right;
     color: #8A8A8D;
-    -webkit-appearance: none;
     outline: none;
     border-style: none;
     font-family: "Lato", sans-serif;
     font-size: 17px;
-    margin-top:-2px;
-    margin-right: -6px;
+    padding: 0;
+    margin: 0;
+    margin-right: 5px;
+    height: 18px;
     text-align: right;
+    width: 80px;
 }
 
-a{
+a {
     margin-left: 8px;
     margin-top: 6px;
     margin-bottom: -4px;
     font-size: 15px;
     color: #8A8A8D;
     display: block;
+}
+/* small text behind settings value*/
+.small_info_text{
+    float:right;
+    color: #8A8A8D;
+    position: relative;
 }

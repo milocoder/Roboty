@@ -6,6 +6,7 @@ top_color=255
 [motor settings]
 motor_max_speed=100
 motor_balance=0
+motor_start_time=5
 
 [general]
 robot_name=W.R.1
