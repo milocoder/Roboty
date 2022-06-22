@@ -1,0 +1,13 @@
+#include "mbed.h"
+#include "FileHandle.h"
+
+DigitalIn knop(D12);
+BufferedSerial device(D1,D0); // tx, rx
+
+int main() {
+    while(1){
+            char* data = "Hallo Richard\n";
+            device.write(data, strlen(data));
+            wait_us(100000);
+    }
+}
